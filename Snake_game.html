@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الثعبان</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            direction: rtl;
+            overflow: hidden; /* Prevent scrollbars from floating hearts */
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            position: relative; /* For sparkle positioning */
+            z-index: 10; /* Ensure screens are above hearts */
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .main-title {
+            color: #d63384;
+            font-size: 4em; /* Increased font size */
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            animation: sparkle 2s infinite;
+            font-family: 'Amiri', serif;
+        }
+
+        .subtitle {
+            color: #d63384;
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1); }
+            50% { text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1), 0 0 20px rgba(214, 51, 132, 0.5); }
+        }
+
+        .game-container {
+            display: flex;
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+            justify-content: center;
+            flex-direction: row-reverse; /* Controls on the right for RTL */
+        }
+
+        .game-area {
+            flex: 1;
+            min-width: 300px; /* Ensure game area doesn't shrink too much */
+            text-align: center;
+        }
+
+        .controls-area {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex-shrink: 0; /* Prevent shrinking on smaller screens */
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: #d63384;
+            gap: 15px;
+            flex-wrap: wrap; /* Allow info cards to wrap */
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.1em;
+            flex: 1;
+            min-width: 120px; /* Minimum width for info cards */
+            text-align: center;
+        }
+
+        canvas {
+            border: 4px solid #d63384;
+            border-radius: 20px;
+            background: linear-gradient(45deg, #fff0f5, #fce4ec);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            display: block; /* Remove extra space below canvas */
+            margin: 0 auto; /* Center canvas */
+            max-width: 100%; /* Ensure canvas is responsive */
+            height: auto; /* Maintain aspect ratio */
+        }
+
+        .controls-panel {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .controls-title {
+            color: #d63384;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .direction-controls {
+            display: grid;
+            grid-template-areas: 
+                ". up ."
+                "right center left" /* Swapped right and left visually */
+                ". down .";
+            gap: 10px;
+            margin-bottom: 20px;
+            max-width: 200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .control-btn {
+            background: linear-gradient(45deg, #ff6b9d, #d63384);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 1.5em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(214, 51, 132, 0.4);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 5px rgba(214, 51, 132, 0.4);
+        }
+
+        .control-btn.up { grid-area: up; }
+        .control-btn.down { grid-area: down; }
+        .control-btn.left { grid-area: left; } /* Keep class names for CSS grid-area */
+        .control-btn.right { grid-area: right; } /* Keep class names for CSS grid-area */
+
+        .game-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .game-btn {
+            background: linear-gradient(45deg, #ff6b9d, #d63384);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 20px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Cairo', sans-serif;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(214, 51, 132, 0.3);
+        }
+
+        .game-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(214, 51, 132, 0.3);
+        }
+
+        .game-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .game-btn.secondary {
+            background: linear-gradient(45deg, #ffa5cc, #ff6b9d);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px;
+            border: 3px solid #d63384;
+            border-radius: 20px;
+            font-size: 1.2em;
+            margin: 20px 0;
+            text-align: center;
+            font-family: 'Cairo', sans-serif;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-field:focus {
+            outline: none;
+            box-shadow: 0 0 15px rgba(214, 51, 132, 0.4), inset 0 2px 5px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .leaderboard-container {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .leaderboard-title {
+            color: #d63384;
+            font-size: 2em;
+            font-weight: 700;
+            margin-bottom: 25px;
+            font-family: 'Amiri', serif;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            font-weight: 600;
+            color: #d63384;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .leaderboard-item:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(214, 51, 132, 0.2);
+        }
+
+        .rank {
+            background: linear-gradient(45deg, #ff6b9d, #d63384);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            font-weight: 700;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .rank.gold { background: linear-gradient(45deg, #ffd700, #ffb347); }
+        .rank.silver { background: linear-gradient(45deg, #c0c0c0, #a8a8a8); }
+        .rank.bronze { background: linear-gradient(45deg, #cd7f32, #b8860b); }
+
+        .player-info {
+            flex: 1;
+            margin: 0 15px;
+            text-align: right;
+            overflow: hidden; /* Hide overflow for long names */
+            white-space: nowrap; /* Prevent name wrapping */
+            text-overflow: ellipsis; /* Add ellipsis for overflow */
+        }
+
+        .player-name {
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .player-score {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #d63384;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .rules-section {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            color: #d63384;
+            line-height: 1.6;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle-float 1.5s ease-out forwards;
+            z-index: 20; /* Above canvas */
+        }
+
+        @keyframes sparkle-float {
+            0% {
+                opacity: 1;
+                transform: scale(0);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0) translateY(-30px);
+            }
+        }
+
+        .floating-hearts {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1; /* Below screens */
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 25px;
+            color: rgba(255, 182, 193, 0.7);
+            animation: float-heart 8s linear infinite;
+        }
+
+        @keyframes float-heart {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .game-over-message {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            color: #d63384;
+            font-size: 1.2em;
+            line-height: 1.6;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Confirmation Modal Styles */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000; /* On top of everything */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #fefefe, #fce4ec);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            color: #d63384;
+            max-width: 400px;
+            width: 90%;
+            border: 2px solid #ff6b9d;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-family: 'Amiri', serif;
+        }
+
+        .modal-content p {
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .modal-btn {
+            background: linear-gradient(45deg, #ff6b9d, #d63384);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 15px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(214, 51, 132, 0.3);
+        }
+
+        .modal-btn.cancel {
+            background: linear-gradient(45deg, #ccc, #aaa);
+        }
+
+        .modal-btn.cancel:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Difficulty Selection Styles */
+        .difficulty-selection {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .difficulty-selection label {
+            display: inline-flex;
+            align-items: center;
+            margin: 0 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #d63384;
+            transition: color 0.3s;
+        }
+
+        .difficulty-selection label:hover {
+            color: #ff6b9d;
+        }
+
+        .difficulty-selection input[type="radio"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #d63384;
+            border-radius: 50%;
+            margin-left: 8px;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .difficulty-selection input[type="radio"]:checked {
+            background-color: #d63384;
+            border-color: #d63384;
+            box-shadow: 0 0 0 4px rgba(214, 51, 132, 0.3);
+        }
+
+        .difficulty-selection input[type="radio"]:checked::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .user-id-display {
+            color: #d63384;
+            font-size: 0.8em;
+            margin-top: 10px;
+            word-break: break-all; /* Allow long IDs to wrap */
+            opacity: 0.7;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #d63384; /* Pink */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column; /* Stack vertically on small screens */
+            }
+            
+            .controls-area {
+                width: 100%;
+                order: -1; /* Move controls above canvas on mobile */
+            }
+            
+            .main-title {
+                font-size: 3em; /* Adjusted for smaller screens */
+            }
+            
+            canvas {
+                width: 100%;
+                height: auto; /* Adjust height dynamically */
+            }
+
+            .direction-controls {
+                max-width: 250px;
+            }
+
+            .control-btn {
+                padding: 18px;
+                font-size: 1.3em;
+            }
+
+            .screen {
+                padding: 25px;
+            }
+
+            .info-card {
+                min-width: unset; /* Remove min-width for better wrapping */
+                flex-basis: 48%; /* Two cards per row */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-hearts" id="hearts"></div>
+    
+    <div class="modal-overlay" id="confirmModalOverlay">
+        <div class="modal-content">
+            <h3 id="modalTitle">تأكيد الإجراء</h3>
+            <p id="modalMessage">هل أنت متأكدة من هذا الإجراء؟</p>
+            <div class="modal-buttons">
+                <button class="modal-btn" id="modalConfirmBtn">نعم</button>
+                <button class="modal-btn cancel" id="modalCancelBtn">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen active" id="openingScreen">
+        <h1 class="main-title"> سوسو الطفشانة </h1>
+        <p class="subtitle">
+            ارحبي يالغلا وش هالزين، شبغيتي؟ امزح…<br>
+            هذي لعبة الثعبان، معروفة صح؟ اجل الي ماتلعب زين بتجلدها كرومي<br>
+            إذا تبوني اعدل شيء لا تكلموني🫦
+        </p>
+        <div style="margin: 40px 0;">
+            <div style="font-size: 3em; margin: 20px 0;">🐍💕🌸</div>
+        </div>
+        <button class="game-btn" onclick="showNameScreen()" style="font-size: 1.3em; padding: 20px 40px;">
+            ابدئي اللعب! ✨
+        </button>
+    </div>
+
+    <div class="screen" id="nameScreen">
+        <h1 class="main-title">ارحبي يالغلا! </h1>
+        <p class="subtitle">
+            اكتبي اسمك ورقمك خاص لاهنتي💋
+        </p>
+        <input type="text" id="playerName" class="input-field" placeholder="اكتبي اسمك هنا..." maxlength="15">
+        <div style="margin-top: 30px;">
+            <button class="game-btn" onclick="startGameFlow()" style="font-size: 1.2em; margin: 10px;">
+                هيا نلعب! 🎮
+            </button>
+            <button class="game-btn secondary" onclick="skipName()" style="font-size: 1.1em; margin: 10px;">
+                تخطي (لعب بدون اسم)
+            </button>
+        </div>
+    </div>
+
+    <div class="screen" id="gameScreen">
+        <div class="game-container">
+            <div class="game-area">
+                <h2 style="color: #d63384; font-size: 1.8em; margin-bottom: 20px; font-family: 'Amiri', serif;">
+                    ✨ لعبة الثعبان ✨
+                </h2>
+                
+                <div class="game-info">
+                    <div class="info-card">
+                        <div>النقاط</div>
+                        <div id="score" style="font-size: 1.3em; font-weight: 700;">0</div>
+                    </div>
+                    <div class="info-card">
+                        <div>المستوى</div>
+                        <div id="level" style="font-size: 1.3em; font-weight: 700;">1</div>
+                    </div>
+                    <div class="info-card">
+                        <div>أفضل نتيجة</div>
+                        <div id="sessionBest" style="font-size: 1.3em; font-weight: 700;">0</div>
+                    </div>
+                </div>
+                
+                <canvas id="gameCanvas" width="500" height="500"></canvas>
+                
+                <div id="gameOverMessage" class="game-over-message" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">انتهت اللعبة! 💔</h3>
+                    <p>نقاطك النهائية: <span id="finalScore" style="font-weight: 700;">0</span></p>
+                    <p id="achievementMessage" style="margin-top: 10px;"></p>
+                </div>
+            </div>
+            
+            <div class="controls-area">
+                <div class="controls-panel">
+                    <div class="controls-title">🎮 التحكم في اللعبة</div>
+                    
+                    <div class="direction-controls">
+                        <button class="control-btn up" id="upBtn">⬆️</button>
+                        <button class="control-btn left" id="leftBtn">⬅️</button>
+                        <button class="control-btn right" id="rightBtn">➡️</button>
+                        <button class="control-btn down" id="downBtn">⬇️</button>
+                    </div>
+                    
+                    <div style="color: #d63384; font-size: 0.9em; margin-bottom: 20px; text-align: center;">
+                        أو استخدمي أزرار الأسهم في لوحة المفاتيح
+                    </div>
+
+                    <div class="controls-title" style="margin-top: 20px;">
+                        مستوى الصعوبة 🚀
+                    </div>
+                    <div class="difficulty-selection">
+                        <label>
+                            <input type="radio" name="difficulty" value="easy" checked> سهل
+                        </label>
+                        <label>
+                            <input type="radio" name="difficulty" value="medium"> متوسط
+                        </label>
+                        <label>
+                            <input type="radio" name="difficulty" value="hard"> صعب
+                        </label>
+                    </div>
+                    
+                    <div class="game-buttons">
+                        <button class="game-btn" id="startBtn" onclick="startGame()">ابدئي اللعبة ✨</button>
+                        <button class="game-btn secondary" id="pauseBtn" onclick="togglePause()" disabled>إيقاف مؤقت ⏸️</button>
+                        <button class="game-btn secondary" onclick="resetGame()">إعادة تشغيل 🔄</button>
+                        <button class="game-btn secondary" onclick="showLeaderboard()">قائمة الشرف 🏆</button>
+                    </div>
+                </div>
+                
+                <div class="rules-section">
+                    <strong>قواعد اللعبة:</strong><br>
+                    🌸 اجمعي الورود لتنمو<br>
+                    💖 تجنبي الجدران والاصطدام بنفسك<br>
+                    ✨ السرعة تزيد مع كل مستوى<br>
+                    🏆 احصلي على 50+ نقطة لدخول قائمة الشرف
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen" id="leaderboardScreen">
+        <h1 class="main-title">🏆 قائمة الشرف 🏆</h1>
+        <p class="subtitle">أفضل عشر لاعبات حققن أعلى النقاط! 👑</p>
+        
+        <div class="leaderboard-container">
+            <ul class="leaderboard-list" id="leaderboardList">
+                <div style="text-align: center; padding: 20px;">
+                    <span class="loading-spinner"></span> جاري تحميل قائمة الشرف...
+                </div>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <button class="game-btn" onclick="showGameScreen()" style="font-size: 1.2em; margin: 10px;">
+                العودة للعبة 🎮
+            </button>
+            <div class="user-id-display">
+                <span id="currentUserId"></span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase variables (provided by Canvas environment)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        let auth;
+        let userId = null; // Will store the authenticated user's ID
+
+        // Initialize Firebase
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // Authenticate user
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    document.getElementById('currentUserId').textContent = `معرف المستخدم: ${userId}`;
+                    console.log("Firebase authenticated. User ID:", userId);
+                } else {
+                    // Sign in anonymously if not already authenticated
+                    try {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Error during anonymous sign-in:", error);
+                        document.getElementById('currentUserId').textContent = `فشل المصادقة: ${error.message}`;
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error("Failed to initialize Firebase:", error);
+            // Using a custom modal or message box instead of alert()
+            const errorMessage = "فشل تهيئة Firebase. قد لا تعمل لوحة الصدارة المشتركة بشكل صحيح. تحقق من إعدادات Firebase.";
+            showConfirmModal(errorMessage, () => {}); // Show message, no confirm action needed
+        }
+
+        let currentScreen = 'opening';
+        let playerName = '';
+        let canvas, ctx;
+        let snake = [{x: 250, y: 250}];
+        let food = {};
+        let dx = 0;
+        let dy = 0;
+        let score = 0;
+        let level = 1;
+        let gameRunning = false;
+        let gamePaused = false;
+        let sessionBest = 0; // This will still track best score for current session
+        let gameSpeed = 180; // Default speed for medium difficulty
+        let trail = [];
+        let gameInterval;
+        const gridSize = 25; // Size of each snake segment and food item
+        let currentDifficulty = 'medium'; // Default difficulty
+
+        // Difficulty settings: baseSpeed is initial speed, speedIncrement is how much faster it gets per level
+        const difficultySettings = {
+            'easy': { baseSpeed: 220, speedIncrement: 10 },
+            'medium': { baseSpeed: 180, speedIncrement: 12 },
+            'hard': { baseSpeed: 140, speedIncrement: 15 }
+        };
+
+        // Get DOM elements for game controls and info displays
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const sessionBestDisplay = document.getElementById('sessionBest');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const gameOverMessageDiv = document.getElementById('gameOverMessage');
+        const finalScoreSpan = document.getElementById('finalScore');
+        const achievementMessageP = document.getElementById('achievementMessage');
+        const leaderboardList = document.getElementById('leaderboardList'); // Get leaderboard list element
+
+        // Confirmation Modal elements (still needed for other confirmations if added later)
+        const confirmModalOverlay = document.getElementById('confirmModalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        let confirmCallback = null; // Stores the callback function for confirmation
+
+        // Function to show the custom confirmation modal
+        function showConfirmModal(message, onConfirm) {
+            modalMessage.textContent = message;
+            confirmCallback = onConfirm;
+            modalConfirmBtn.style.display = onConfirm ? 'inline-block' : 'none'; // Show confirm button only if onConfirm is provided
+            modalCancelBtn.style.display = onConfirm ? 'inline-block' : 'none'; // Show cancel button only if onConfirm is provided
+            confirmModalOverlay.style.display = 'flex'; // Show the modal
+        }
+
+        // Event listeners for modal buttons
+        modalConfirmBtn.onclick = () => {
+            if (confirmCallback) {
+                confirmCallback(true);
+            }
+            confirmModalOverlay.style.display = 'none'; // Hide the modal
+        };
+
+        modalCancelBtn.onclick = () => {
+            if (confirmCallback) {
+                confirmCallback(false);
+            }
+            confirmModalOverlay.style.display = 'none'; // Hide the modal
+        };
+
+        // --- Screen Management Functions ---
+        // Make screen functions globally accessible via window object
+        window.showScreen = function(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+            currentScreen = screenId;
+        }
+
+        window.showNameScreen = function() {
+            window.showScreen('nameScreen');
+            document.getElementById('playerName').focus();
+        }
+
+        window.startGameFlow = function() {
+            playerName = document.getElementById('playerName').value.trim();
+            if (playerName === '') {
+                playerName = 'مزة مجهولة'; // Default name if empty
+            }
+            window.showGameScreen();
+        }
+
+        window.skipName = function() {
+            playerName = 'مزة مجهولة';
+            window.showGameScreen();
+        }
+
+        window.showGameScreen = function() {
+            window.showScreen('gameScreen');
+            initializeGame(); // Initialize canvas and game state
+            resizeCanvas(); // Ensure canvas is correctly sized
+        }
+
+        window.showLeaderboard = function() {
+            window.showScreen('leaderboardScreen');
+            updateLeaderboardDisplay(); // Refresh leaderboard display
+        }
+
+        // --- Game Initialization ---
+        function initializeGame() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Set up event listeners for touch controls (buttons)
+            // The CSS grid-area "right center left" visually swaps the buttons,
+            // but the JavaScript here assigns their original directional functionality.
+            document.getElementById('upBtn').addEventListener('click', () => changeDirection(0, -gridSize));
+            document.getElementById('downBtn').addEventListener('click', () => changeDirection(0, gridSize));
+            // 'leftBtn' has ⬅️ emoji, and it should move left
+            document.getElementById('leftBtn').addEventListener('click', () => changeDirection(-gridSize, 0)); 
+            // 'rightBtn' has ➡️ emoji, and it should move right
+            document.getElementById('rightBtn').addEventListener('click', () => changeDirection(gridSize, 0)); 
+            
+            // Keyboard controls
+            document.addEventListener('keydown', handleKeyPress);
+
+            // Difficulty radio button event listeners
+            document.querySelectorAll('input[name="difficulty"]').forEach(radio => {
+                radio.addEventListener('change', (event) => {
+                    currentDifficulty = event.target.value;
+                    if (!gameRunning) { // Only reset if game is not running to apply new speed
+                        window.resetGame(); 
+                    }
+                });
+            });
+
+            // Load session best score from local storage (still useful for current session tracking)
+            sessionBest = parseInt(localStorage.getItem('girlySnakeSessionBestAR') || '0', 10);
+            sessionBestDisplay.textContent = sessionBest;
+
+            window.resetGame(); // Reset game to initial state
+        }
+
+        // --- Game Control Logic ---
+        function handleKeyPress(event) {
+            if (currentScreen !== 'gameScreen') return; // Only process keys on game screen
+
+            const keyPressed = event.key;
+            let newDx = dx;
+            let newDy = dy;
+
+            // Handle arrow keys for direction
+            if (keyPressed === 'ArrowUp' && dy === 0) {
+                newDx = 0;
+                newDy = -gridSize;
+            } else if (keyPressed === 'ArrowDown' && dy === 0) {
+                newDx = 0;
+                newDy = gridSize;
+            } else if (keyPressed === 'ArrowLeft' && dx === 0) { 
+                newDx = -gridSize;
+                newDy = 0;
+            } else if (keyPressed === 'ArrowRight' && dx === 0) { 
+                newDx = gridSize;
+                newDy = 0;
+            } else if (keyPressed === ' ' || keyPressed === 'Spacebar') { // Spacebar for pause
+                event.preventDefault(); // Prevent page scrolling
+                window.togglePause();
+                return;
+            }
+
+            // If the game is not running and a direction is pressed, start the game
+            if (!gameRunning && (newDx !== 0 || newDy !== 0)) {
+                dx = newDx; // Set initial direction
+                dy = newDy;
+                window.startGame();
+            } else if (gameRunning) {
+                changeDirection(newDx, newDy);
+            }
+        }
+
+        function changeDirection(newDx, newDy) {
+            // Prevent snake from reversing directly into itself
+            const changingX = newDx !== 0;
+            const changingY = newDy !== 0;
+
+            const currentMovingX = dx !== 0;
+            const currentMovingY = dy !== 0;
+
+            // If moving horizontally and trying to move horizontally in opposite direction
+            if (changingX && currentMovingX && (newDx === -dx)) return;
+            // If moving vertically and trying to move vertically in opposite direction
+            if (changingY && currentMovingY && (newDy === -dy)) return;
+
+            if (gamePaused) return; // Cannot change direction while paused
+            
+            dx = newDx;
+            dy = newDy;
+        }
+
+        // --- Leaderboard Functions (Now using Firestore) ---
+        function updateLeaderboardDisplay() {
+            if (!db) {
+                leaderboardList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">خطأ: لم يتم تهيئة قاعدة البيانات.</div>';
+                return;
+            }
+
+            leaderboardList.innerHTML = '<div style="text-align: center; padding: 20px;"><span class="loading-spinner"></span> جاري تحميل قائمة الشرف...</div>';
+
+            const leaderboardRef = collection(db, `artifacts/${appId}/public/data/snakeLeaderboard`);
+            const q = query(leaderboardRef, orderBy("score", "desc"), limit(10));
+
+            onSnapshot(q, (snapshot) => {
+                const leaderboard = [];
+                snapshot.forEach((doc) => {
+                    leaderboard.push(doc.data());
+                });
+
+                if (leaderboard.length === 0) {
+                    leaderboardList.innerHTML = '<div style="text-align: center; color: #999; padding: 40px; font-size: 1.2em;">لا توجد نتائج بعد!<br>كوني أول من يسجل نقاطاً! ✨</div>';
+                    return;
+                }
+                
+                leaderboardList.innerHTML = leaderboard
+                    .map((entry, index) => {
+                        let rankClass = '';
+                        if (index === 0) rankClass = 'gold';
+                        else if (index === 1) rankClass = 'silver';
+                        else if (index === 2) rankClass = 'bronze';
+                        
+                        return `
+                            <li class="leaderboard-item">
+                                <span class="rank ${rankClass}">${index + 1}</span>
+                                <div class="player-info">
+                                    <div class="player-name">${entry.name}</div>
+                                    <div style="font-size: 0.8em; opacity: 0.8;">(${entry.userId ? entry.userId.substring(0, 8) + '...' : 'مجهول'})</div>
+                                </div>
+                                <div class="player-score">${entry.score}</div>
+                            </li>
+                        `;
+                    }).join('');
+            }, (error) => {
+                console.error("Error fetching leaderboard:", error);
+                leaderboardList.innerHTML = `<div style="text-align: center; color: #d63384; padding: 20px;">فشل تحميل قائمة الشرف: ${error.message}</div>`;
+            });
+        }
+
+        async function addToLeaderboard(name, score) {
+            // Only add to leaderboard if score is positive and Firebase is initialized
+            if (score <= 0 || !db || !userId) {
+                console.warn("Could not add score to leaderboard: Score is zero/negative, or Firebase/User ID not ready.");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, `artifacts/${appId}/public/data/snakeLeaderboard`), {
+                    name: name,
+                    score: score,
+                    userId: userId, // Save the user's ID
+                    timestamp: serverTimestamp() // Use server timestamp for accurate ordering
+                });
+                console.log("Score added to Firestore successfully!");
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                showConfirmModal("حدث خطأ أثناء حفظ نتيجتك في لوحة الصدارة المشتركة.", () => {});
+            }
+        }
+
+        // --- Visual Effects ---
+        function createFloatingHearts() {
+            const heartsContainer = document.getElementById('hearts');
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.innerHTML = Math.random() > 0.5 ? '💕' : '🌸'; // Randomly choose between heart and flower emoji
+                heart.style.left = Math.random() * 100 + '%'; // Random horizontal position
+                heart.style.animationDuration = (Math.random() * 4 + 4) + 's'; // Random animation duration
+                heart.style.opacity = '0'; // Start invisible
+                heartsContainer.appendChild(heart);
+                
+                // Remove heart after its animation finishes
+                setTimeout(() => {
+                    heart.remove();
+                }, parseFloat(heart.style.animationDuration) * 1000);
+            }, 1200); // Create a new heart every 1.2 seconds
+        }
+
+        // --- Game Drawing and Movement ---
+        function getRandomFoodPosition() {
+            let newFood;
+            while (true) {
+                newFood = {
+                    x: Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize,
+                    y: Math.floor(Math.random() * (canvas.height / gridSize)) * gridSize
+                };
+                // Check if new food position overlaps with any snake segment
+                let collision = false;
+                for (let i = 0; i < snake.length; i++) {
+                    if (snake[i].x === newFood.x && snake[i].y === newFood.y) {
+                        collision = true;
+                        break;
+                    }
+                }
+                if (!collision) {
+                    return newFood;
+                }
+            }
+        }
+
+        function drawSnakeSegment(x, y, isHead = false) {
+            const gradient = ctx.createRadialGradient(x + gridSize / 2, y + gridSize / 2, 0, x + gridSize / 2, y + gridSize / 2, gridSize / 2);
+            if (isHead) {
+                gradient.addColorStop(0, '#ff69b4'); // Lighter pink
+                gradient.addColorStop(1, '#d63384'); // Deeper pink
+            } else {
+                gradient.addColorStop(0, '#ffb6c1'); // Lightest pink
+                gradient.addColorStop(1, '#ff69b4'); // Lighter pink
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x + 2, y + 2, gridSize - 4, gridSize - 4); // Draw slightly smaller to show border
+            ctx.strokeStyle = '#fff'; // White border
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 2, y + 2, gridSize - 4, gridSize - 4);
+            
+            if (Math.random() < 0.05) { // Reduced frequency for less visual clutter
+                createSparkle(x + gridSize / 2, y + gridSize / 2);
+            }
+        }
+
+        function drawFood() {
+            const centerX = food.x + gridSize / 2;
+            const centerY = food.y + gridSize / 2;
+            
+            ctx.fillStyle = '#ff69b4'; // Pink petals
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI) / 4; 
+                const petalX = centerX + Math.cos(angle) * (gridSize * 0.3); 
+                const petalY = centerY + Math.sin(angle) * (gridSize * 0.3);
+                
+                ctx.beginPath();
+                ctx.arc(petalX, petalY, gridSize * 0.2, 0, Math.PI * 2); 
+                ctx.fill();
+            }
+            
+            ctx.fillStyle = '#ffd700'; // Gold center
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, gridSize * 0.15, 0, Math.PI * 2); 
+            ctx.fill();
+        }
+
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            const canvasRect = canvas.getBoundingClientRect();
+            sparkle.style.left = (canvasRect.left + x) + 'px';
+            sparkle.style.top = (canvasRect.top + y) + 'px';
+            document.body.appendChild(sparkle);
+            
+            setTimeout(() => sparkle.remove(), 1500);
+        }
+
+        function drawTrail() {
+            trail.forEach((segment, index) => {
+                const alpha = (index + 1) / trail.length * 0.4; 
+                ctx.fillStyle = `rgba(255, 105, 180, ${alpha})`; 
+                ctx.fillRect(segment.x + 5, segment.y + 5, gridSize - 10, gridSize - 10); 
+            });
+        }
+
+        function draw() {
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#fff0f5'); 
+            gradient.addColorStop(1, '#fce4ec'); 
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            drawTrail(); 
+            snake.forEach((segment, index) => {
+                drawSnakeSegment(segment.x, segment.y, index === 0); 
+            });
+            drawFood(); 
+        }
+
+        function moveSnake() {
+            if (!gameRunning || gamePaused) return;
+
+            let head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+            // Wrap-around functionality: if snake hits a wall, it appears on the opposite side
+            if (head.x < 0) {
+                head.x = canvas.width - gridSize;
+            } else if (head.x >= canvas.width) {
+                head.x = 0;
+            }
+            if (head.y < 0) {
+                head.y = canvas.height - gridSize;
+            } else if (head.y >= canvas.height) {
+                head.y = 0;
+            }
+
+            // Add head's previous position to trail if moving
+            if (dx !== 0 || dy !== 0) {
+                trail.push({x: snake[0].x, y: snake[0].y});
+                if (trail.length > 6) trail.shift(); 
+            }
+
+            // Check for self-collision (snake hitting its own body)
+            for (let i = 1; i < snake.length; i++) {
+                if (snake[i].x === head.x && snake[i].y === head.y) {
+                    gameOver();
+                    return;
+                }
+            }
+
+            snake.unshift(head); // Add new head to the front of the snake
+
+            // Check if snake ate food
+            if (head.x === food.x && head.y === food.y) {
+                score += 10; 
+                level = Math.floor(score / 60) + 1; 
+                
+                // Recalculate game speed based on current difficulty and level
+                const settings = difficultySettings[currentDifficulty];
+                gameSpeed = Math.max(50, settings.baseSpeed - (level - 1) * settings.speedIncrement);
+                
+                scoreDisplay.textContent = score;
+                levelDisplay.textContent = level;
+                
+                if (score > sessionBest) {
+                    sessionBest = score;
+                    sessionBestDisplay.textContent = sessionBest;
+                    localStorage.setItem('girlySnakeSessionBestAR', sessionBest); // Save best score
+                }
+                
+                // Create multiple sparkle effects when food is eaten
+                for (let i = 0; i < 8; i++) {
+                    setTimeout(() => {
+                        createSparkle(
+                            food.x + Math.random() * gridSize, 
+                            food.y + Math.random() * gridSize
+                        );
+                    }, i * 120); 
+                }
+                
+                food = getRandomFoodPosition(); // Generate new food
+                
+                // Adjust game interval based on new speed
+                clearInterval(gameInterval);
+                gameInterval = setInterval(gameLoop, gameSpeed);
+            } else {
+                snake.pop(); // Remove tail segment if no food was eaten
+            }
+        }
+
+        // Function to handle game over state
+        function gameOver() {
+            gameRunning = false;
+            gamePaused = false;
+            clearInterval(gameInterval); // Stop the game loop
+            
+            gameOverMessageDiv.style.display = 'block'; // Show game over message
+            finalScoreSpan.textContent = score; // Display final score
+
+            let achievementMsg = '';
+            if (score >= 100) {
+                achievementMsg = 'يا بطلة! أنتِ أسطورة حقيقية! 🌟';
+            } else if (score >= 50) {
+                achievementMsg = 'أحسنتِ! لقد دخلتِ قائمة الشرف! 💖';
+            } else if (score > 0) {
+                achievementMsg = 'نتيجة جيدة! حاولي مرة أخرى لتحقيق المزيد! 💪';
+            } else {
+                achievementMsg = 'لا بأس، حاولي مرة أخرى! اللعبة تحتاج للممارسة! 😉';
+            }
+            achievementMessageP.textContent = achievementMsg;
+
+            // Add score to leaderboard if eligible and name is provided
+            if (score > 0) {
+                addToLeaderboard(playerName, score);
+            }
+
+            // Update button states
+            startBtn.textContent = 'ابدئي من جديد ✨';
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+
+            // Show leaderboard after a short delay
+            setTimeout(() => {
+                window.showLeaderboard();
+            }, 2000); // 2 seconds delay
+        }
+
+        // Main game loop
+        function gameLoop() {
+            if (!gameRunning || gamePaused) return; 
+            draw();
+            moveSnake();
+        }
+
+        // Start the game
+        window.startGame = function() {
+            if (!gameRunning) { 
+                // If dx and dy are 0 (initial state), set a default direction
+                if (dx === 0 && dy === 0) {
+                    dx = gridSize; // Start moving right by default if no direction given
+                }
+                gameRunning = true;
+                gamePaused = false;
+                gameOverMessageDiv.style.display = 'none'; 
+                startBtn.textContent = 'ابدئي اللعبة ✨'; 
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                
+                // Set initial game speed based on selected difficulty
+                const settings = difficultySettings[currentDifficulty];
+                gameSpeed = settings.baseSpeed;
+
+                gameInterval = setInterval(gameLoop, gameSpeed); 
+            }
+        }
+
+        // Pause/unpause the game
+        window.togglePause = function() {
+            if (!gameRunning) return; 
+            gamePaused = !gamePaused;
+            if (gamePaused) {
+                clearInterval(gameInterval);
+                pauseBtn.textContent = 'استئناف ▶️';
+            } else {
+                gameInterval = setInterval(gameLoop, gameSpeed);
+                pauseBtn.textContent = 'إيقاف مؤقت ⏸️';
+            }
+        }
+
+        // Reset game state
+        window.resetGame = function() {
+            clearInterval(gameInterval); 
+            snake = [{x: 250, y: 250}]; 
+            food = getRandomFoodPosition(); 
+            dx = 0; // No initial movement, user must press a direction
+            dy = 0;
+            score = 0;
+            level = 1;
+            trail = [];
+            gameRunning = false;
+            gamePaused = false;
+
+            scoreDisplay.textContent = score;
+            levelDisplay.textContent = level;
+            sessionBestDisplay.textContent = sessionBest; 
+            gameOverMessageDiv.style.display = 'none'; 
+
+            startBtn.textContent = 'ابدئي اللعبة ✨';
+            startBtn.disabled = false; 
+            pauseBtn.disabled = true; 
+            
+            draw(); 
+        }
+
+        // Handle canvas resizing to maintain responsiveness
+        function resizeCanvas() {
+            if (!canvas) return; 
+
+            const gameArea = document.querySelector('.game-area');
+            const gameAreaWidth = gameArea.clientWidth;
+            const size = Math.min(gameAreaWidth, 500); 
+            canvas.width = Math.floor(size / gridSize) * gridSize; 
+            canvas.height = Math.floor(size / gridSize) * gridSize;
+            draw(); 
+        }
+
+        // Initialize on window load
+        window.onload = function() {
+            createFloatingHearts(); 
+            // Set the default checked radio button based on currentDifficulty
+            document.querySelector(`input[name="difficulty"][value="${currentDifficulty}"]`).checked = true;
+            window.addEventListener('resize', resizeCanvas); 
+        };
+    </script>
+</body>
+</html>
